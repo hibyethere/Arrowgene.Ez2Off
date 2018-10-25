@@ -883,16 +883,16 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
             return Upsert("song", "id", song.Id, parameters, values);
         }
 
-        public Score SelectBestScore(int accountId, int songId, DifficultyType difficulty)
+        public Score SelectBestScore(int accountId, int songId, DifficultyType difficulty, ModeType mode)
         {
             string sql = String.Join(Seperator,
                 "SELECT `id`, `game_id`, `score`.`account_id`, `song_id`, `difficulty`, `stage_clear`, `score`.`max_combo`, `kool`, `cool`, `good`,",
                 "`miss`, `fail`, `raw_score`, `rank`, `total_notes`, `combo_type`, `total_score`, `note_effect`, `fade_effect`,",
-                "`team`, `slot`, `created`, `character`.`name`",
+                "`team`, `slot`, `mode_type`, `created`, `character`.`name`",
                 "FROM `score`",
                 "INNER JOIN `character` on `character`.`account_id` = `score`.`account_id`",
                 "WHERE",
-                $"`song_id`={songId} AND `score`.`account_id`={accountId} AND `difficulty`={(int) difficulty}",
+                $"`song_id`={songId} AND `score`.`account_id`={accountId} AND `difficulty`={(int) difficulty} AND `mode_type`={(int) mode}",
                 "ORDER BY `total_score` DESC",
                 "LIMIT 1;"
             );
@@ -923,24 +923,62 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
                     score.FadeEffect = (FadeEffectType) reader.GetInt32(18);
                     score.Team = (TeamType) reader.GetInt32(19);
                     score.Slot = reader.GetInt32(20);
-                    score.Created = reader.GetDateTime(21);
-                    score.CharacterName = reader.GetString(22);
+                    score.ModeType = (ModeType)reader.GetInt32(21);
+                    score.Created = reader.GetDateTime(22);
+                    score.CharacterName = reader.GetString(23);
                 }
             });
             return score;
         }
 
-        public List<Score> SelectBestScores(int songId, DifficultyType difficulty, int scoreCount = -1)
+        public Score SelectMyRanking(int accountId, int songId, int difficulty, ModeType mode)
         {
             string sql = String.Join(Seperator,
-                "SELECT `id`, `game_id`, `score`.`account_id`, `song_id`, `difficulty`, `stage_clear`, `score`.`max_combo`, `kool`, `cool`, `good`,",
+                "SELECT `account_id`, `total_score`, `kool`, `cool`, `good`, `miss`, `fail`,",
+                "(SELECT COUNT()+1 FROM (",
+                "SELECT DISTINCT `total_score` FROM `score` AS `t` WHERE `total_score` > `score`.`total_score` AND",
+                $"`song_id`={songId} AND `difficulty`={difficulty} AND `mode_type`={(int) mode}",
+                "GROUP BY `account_id`)",
+                ") AS `Rank`",
+                "FROM `score`",
+                "WHERE",
+                $"`song_id`={songId} AND `account_id`={accountId} AND `difficulty`={difficulty} AND `mode_type`={(int) mode}",
+                "ORDER BY `total_score` DESC",
+                "LIMIT 1;"
+            );
+            Score score = null;
+            ExecuteReader(sql, reader =>
+            {
+                if (reader.Read())
+                {
+                    score = new Score();
+                    score.AccountId = reader.GetInt32(0);
+                    //score.TotalScore = reader.GetInt32(1);
+                    score.Kool = reader.GetInt32(2);
+                    score.Cool = reader.GetInt32(3);
+                    score.Good = reader.GetInt32(4);
+                    score.Miss = reader.GetInt32(5);
+                    score.Fail = reader.GetInt32(6);
+                    score.Ranking = reader.GetInt32(7);
+                }
+            });
+            return score;
+        }
+
+        public List<Score> SelectBestScores(int songId, DifficultyType difficulty, ModeType mode, int scoreCount = -1)
+        {
+            string sql = String.Join(Seperator,
+                "SELECT * FROM",
+                "(SELECT `id`, `game_id`, `score`.`account_id`, `song_id`, `difficulty`, `stage_clear`, `score`.`max_combo`, `kool`, `cool`, `good`,",
                 "`miss`, `fail`, `raw_score`, `rank`, `total_notes`, `combo_type`, `total_score`, `note_effect`, `fade_effect`,",
-                "`team`, `slot`, `created`, `character`.`name`",
+                "`team`, `slot`, `mode_type`, `created`, `character`.`name`",
                 "FROM `score`",
                 "INNER JOIN `character` on `character`.`account_id` = `score`.`account_id`",
                 "WHERE",
-                $"`song_id`={songId} AND `difficulty`={(int) difficulty}",
-                "ORDER BY `total_score` DESC"
+                $"`song_id`={songId} AND `difficulty`={(int) difficulty} AND `mode_type`={(int) mode}",
+                "ORDER BY `total_score`)",
+                "GROUP BY `account_id`",
+                "ORDER BY `total_score` DESC, `created` ASC"
             );
 
             if (scoreCount > 0)
@@ -977,12 +1015,96 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
                     score.FadeEffect = (FadeEffectType) reader.GetInt32(18);
                     score.Team = (TeamType) reader.GetInt32(19);
                     score.Slot = reader.GetInt32(20);
-                    score.Created = reader.GetDateTime(21);
-                    score.CharacterName = reader.GetString(22);
+                    score.ModeType = (ModeType)reader.GetInt32(21);
+                    score.Created = reader.GetDateTime(22);
+                    score.CharacterName = reader.GetString(23);
                     scores.Add(score);
                 }
             });
             return scores;
+        }
+
+        public bool UpdateModeType(int songId, int difficulty, int mode, int notes){
+            string sql = String.Join(Seperator,
+                "UPDATE `score`",
+                "SET",
+                $"`mode_type`={mode}",
+                "WHERE",
+                $"`song_id`={songId} AND `difficulty`={difficulty} AND `total_notes`={notes}"
+            );
+            sql += ";";
+            ExecuteNonQuery(sql);
+            return true;
+        }
+
+        public Character getAccountId(string characterName){
+            string sql = String.Join(Seperator,
+                "SELECT `name`, `sex`, `level`, `ruby_exr`, `street_exr`, `club_exr`, `exp`, `coin`, `cash`,",
+                "`max_combo`, `ruby_wins`, `street_wins`, `club_wins`, `ruby_loses`, `street_loses`, `account_id`,",
+                "`premium` FROM `character`",
+                "WHERE",
+                $"`name`='{characterName}';"
+            );
+
+            Character character = null;
+            ExecuteReader(sql, reader =>
+            {
+                if (reader.HasRows && reader.Read())
+                {
+                    string name = reader.GetString(0);
+                    character = new Character(name);
+                    character.Sex = (CharacterSex) reader.GetInt32(1);
+                    character.Level = reader.GetByte(2);
+                    character.RubyExr = reader.GetInt32(3);
+                    character.StreetExr = reader.GetInt32(4);
+                    character.ClubExr = reader.GetInt32(5);
+                    character.Exp = reader.GetInt32(6);
+                    character.Coin = reader.GetInt32(7);
+                    character.Cash = reader.GetInt32(8);
+                    character.MaxCombo = reader.GetInt16(9);
+                    character.RubyWins = reader.GetInt32(10);
+                    character.StreetWins = reader.GetInt32(11);
+                    character.ClubWins = reader.GetInt32(12);
+                    character.RubyLoses = reader.GetInt32(13);
+                    character.StreetLoses = reader.GetInt32(14);
+                    character.ClubLoses = reader.GetInt32(15);
+                    character.Premium = reader.GetInt16(16);
+                }
+            });
+
+            return character;        
+        }
+
+        public bool DeleteScore(string name){
+            
+            Character accountid = getAccountId(name);
+
+            /*
+            string sql = String.Join(Seperator,
+                "DELETE FROM `score`",
+                "WHERE",
+                $"`song_id`={songId} AND `difficulty`={difficulty} AND `total_score`={score} AND `mode_type`={mode}"
+            );
+            */
+            string sql = String.Join(Seperator,
+                "DELETE FROM `score`",
+                "WHERE",
+                $"`account_id`={accountid.ClubLoses}"
+            );
+            sql += ";";
+            ExecuteNonQuery(sql);
+            return true;
+        }
+
+        public bool DeleteScore(int songId, int difficulty, int mode, int score){
+            string sql = String.Join(Seperator,
+                "DELETE FROM `score`",
+                "WHERE",
+                $"`song_id`={songId} AND `difficulty`={difficulty} AND `total_score`={score} AND `mode_type`={mode}"
+            );
+            sql += ";";
+            ExecuteNonQuery(sql);
+            return true;
         }
 
         public bool InsertScore(Score score)
@@ -991,7 +1113,7 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
                 "INSERT INTO `score`",
                 "(`game_id`, `account_id`, `song_id`, `difficulty`, `stage_clear`, `max_combo`, `kool`, `cool`, `good`,",
                 "`miss`, `fail`, `raw_score`, `rank`, `total_notes`, `combo_type`, `total_score`, `note_effect`, `fade_effect`,",
-                "`team`, `slot`, `created`)",
+                "`team`, `slot`, `mode_type`, `created`)",
                 "VALUES",
                 "(",
                 $"{score.GameId},",
@@ -1014,6 +1136,7 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
                 $"{(int) score.FadeEffect},",
                 $"{(int) score.Team},",
                 $"{score.Slot},",
+                $"{(int) score.ModeType},",
                 $"'{score.Created:yyyy-MM-dd HH:mm:ss}'",
                 ");"
             );
@@ -1385,6 +1508,7 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
                 "`fade_effect` INTEGER NOT NULL,",
                 "`team` INTEGER NOT NULL,",
                 "`slot` INTEGER NOT NULL,",
+                "`mode_type` INTEGER NOT NULL,",
                 "`created` VARCHAR(255) NOT NULL",
                 ");"
             );

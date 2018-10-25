@@ -33,13 +33,18 @@ namespace Arrowgene.Ez2Off.Common.Models
         {
             Playing = false;
             Ready = false;
+            autoReady = false;
+            readyCon = 0;
             Team = TeamType.None;
             Slot = 0;
         }
 
         public bool Playing { get; set; }
         public bool Ready { get; set; }
+        public bool autoReady { get; set; }
+        public int readyCon { get; set; }
         public TeamType Team { get; set; }
         public int Slot { get; set; }
+        
     }
 }

@@ -27,6 +27,7 @@ using Arrowgene.Ez2Off.Server.Models;
 using Arrowgene.Ez2Off.Server.Settings;
 using Arrowgene.Services.Networking.ServerBridge;
 using Arrowgene.Services.Networking.ServerBridge.Tcp;
+using Arrowgene.Ez2Off.Server.Client;
 
 namespace Arrowgene.Ez2Off.Server
 {

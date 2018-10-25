@@ -1,4 +1,4 @@
-﻿/*
+﻿ /*
  * This file is part of Arrowgene.Ez2Off
  *
  * Arrowgene.Ez2Off is a server implementation for the game "Ez2On".
@@ -646,7 +646,7 @@ namespace Arrowgene.Ez2Off.Test.Server.Database
             success = database.InsertScore(score);
             Assert.True(success);
 
-            List<Score> scores = database.SelectBestScores(song.Id, score.Difficulty, 1);
+            List<Score> scores = database.SelectBestScores(song.Id, score.Difficulty, score.ModeType, 1);
             Assert.NotNull(scores);
             Assert.True(scores.Count == 1);
             Score selectedScore = scores[0];

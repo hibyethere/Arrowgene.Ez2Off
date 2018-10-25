@@ -106,24 +106,33 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                 return;
             }
             
-            room.Join(client);
+            // Modified for checking playing state
+            if (!room.Info.Playing) {
+                room.Join(client);
 
-            IBuffer joinRoomPacket = RoomPacket.CreateJoinRoomPacket(room, client);
-            Send(client, 8, joinRoomPacket);
+                IBuffer joinRoomPacket = RoomPacket.CreateJoinRoomPacket(room, client);
+                Send(client, 8, joinRoomPacket);
 
-            IBuffer roomCharacterPacket = RoomPacket.CreateCharacterPacket(room);
-            Send(room, 10, roomCharacterPacket);
-            
-            IBuffer announceJoinPacket = RoomPacket.AnnounceJoin(client);
-            Send(room, 11, announceJoinPacket);
+                IBuffer roomCharacterPacket = RoomPacket.CreateCharacterPacket(room);
+                Send(room, 10, roomCharacterPacket);
+                
+                IBuffer announceJoinPacket = RoomPacket.AnnounceJoin(client);
+                Send(room, 11, announceJoinPacket);
 
-            IBuffer announceRoomPacket = RoomPacket.CreateAnnounceRoomPacket(client.Channel);
-            Send(client.Channel.GetLobbyClients(), 13, announceRoomPacket);
-            
-            IBuffer characterList = LobbyCharacterListPacket.Create(client.Channel);
-            Send(client.Channel.GetLobbyClients(), 2, characterList);
+                IBuffer announceRoomPacket = RoomPacket.CreateAnnounceRoomPacket(client.Channel);
+                Send(client.Channel.GetLobbyClients(), 13, announceRoomPacket);
+                
+                IBuffer characterList = LobbyCharacterListPacket.Create(client.Channel);
+                Send(client.Channel.GetLobbyClients(), 2, characterList);
 
-            _logger.Debug("Character {0} joined room {1}", client.Character.Name, room.Info.Name);
+                _logger.Debug("Character {0} joined room {1}", client.Character.Name, room.Info.Name);
+            }
+            else {
+                _logger.Debug("Exception - This room is playing. CharacterName: {0} RoomName: {1}", client.Character.Name, room.Info.Name);
+                IBuffer joinErrorPacket = RoomPacket.CreateJoinErrorPacket();
+                Send(client, 8, joinErrorPacket);
+                return;
+            }
         }
     }
 }

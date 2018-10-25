@@ -51,8 +51,12 @@ namespace Arrowgene.Ez2Off.Server.Database
         bool UpsertMeta(DatabaseMeta meta);
         Song SelectSong(int songId);
         bool UpsertSong(Song song);
-        List<Score> SelectBestScores(int songId, DifficultyType difficulty, int scoreCount = -1);
-        Score SelectBestScore(int accountId, int songId, DifficultyType difficulty);
+        bool UpdateModeType(int songId, int difficulty, int mode, int notes);
+        bool DeleteScore(string name);
+        bool DeleteScore(int songId, int difficulty, int mode, int score);
+        List<Score> SelectBestScores(int songId, DifficultyType difficulty, ModeType mode, int scoreCount = -1);
+        Score SelectBestScore(int accountId, int songId, DifficultyType difficulty, ModeType mode);
+        Score SelectMyRanking(int accountId, int songId, int difficulty, ModeType mode);
         bool InsertScore(Score score);
         bool InsertGame(Game game);
     }

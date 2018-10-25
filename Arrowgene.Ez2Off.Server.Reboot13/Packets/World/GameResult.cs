@@ -30,6 +30,7 @@ using Arrowgene.Ez2Off.Common.Models;
 using Arrowgene.Ez2Off.Server.Client;
 using Arrowgene.Ez2Off.Server.Models;
 using Arrowgene.Ez2Off.Server.Packet;
+using Arrowgene.Ez2Off.Server.Reboot13.Models;
 using Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder;
 using Arrowgene.Services.Buffers;
 
@@ -43,6 +44,8 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
 
         public override int Id => 0x12; //18
 
+        System.Timers.ElapsedEventHandler lastHander = null;
+
         public override void Handle(EzClient client, EzPacket packet)
         {
             Score score = new Score();
@@ -54,6 +57,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             score.FadeEffect = client.Room.Info.FadeEffect;
             score.NoteEffect = client.Room.Info.NoteEffect;
             score.Slot = client.Player.Slot;
+            score.ModeType = client.Mode;
             score.Team = client.Player.Team;
 
             byte unknown0 = packet.Data.ReadByte();
@@ -71,6 +75,11 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             score.Rank = (ScoreRankType) packet.Data.ReadByte();
             byte unknown3 = packet.Data.ReadByte();
             score.ComboType = Score.GetComboType(score);
+            Score bestScore = Database.SelectBestScore(score.AccountId, score.SongId, score.Difficulty, score.ModeType);
+            if (bestScore != null)
+                score.BestScore = bestScore.TotalScore;
+            else
+                score.BestScore = 0;
 
             _logger.Debug("StageClear: {0}", score.StageClear);
             _logger.Debug("MaxCombo: {0}", score.MaxCombo);
@@ -87,9 +96,24 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             _logger.Debug("Unknown1: {0}", unknown1);
             _logger.Debug("Unknown2: {0}", unknown2);
             _logger.Debug("Unknown3: {0}", unknown3);
+            _logger.Debug("id: {0}", score.AccountId);
 
             client.Player.Playing = false;
             client.Score = score;
+            //client.Room.Info.Playing = false; // Newly Added for checking playing state
+
+            /* mode type add
+            if(Database.UpdateModeType(score.SongId, (int) score.Difficulty, (int) score.ModeType, score.TotalNotes)){
+                _logger.Debug("Song id: {0}", score.SongId);
+                _logger.Debug("Song difficulty: {0}", score.Difficulty);
+                _logger.Debug("Song modetype: {0}", score.ModeType);
+                _logger.Debug("Song totalnotes: {0}", score.TotalNotes);
+            }
+            else{
+                _logger.Debug("Failed");
+            }
+            */
+            
 /*
             //Play check
             IBuffer player4 = EzServer.Buffer.Provide();
@@ -131,10 +155,149 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             player4.WriteByte(0); //?
             Send(client, 0x19, player4);
             */
+            double allKoolScore = 0;
+            if ((score.BestScore == 0) || (score.TotalScore > score.BestScore)){
+                // Modify: 오차 발생 가능하므로 여유있게 +10 정도. 어차피 올케쿨 보너스는 +50000
+                for(int i = 1; i <= score.TotalNotes + 10; i++){ 
+                    if(i >= 1443) allKoolScore += 349;
+                    else allKoolScore += (170 + (17 * Math.Log(i, 2)));
+                }
+                _logger.Debug("allKoolScore: {0}", allKoolScore);
 
-            if (!Database.InsertScore(score))
+                if(score.RawScore <= allKoolScore){
+                    if (!Database.InsertScore(score))
+                    {
+                        _logger.Error("Could't save score for: {0}", client.Character.Name);
+                    }
+                }
+            }
+
+            List<EzClient> clients = client.Room.GetClients();
+            Song song = Database.SelectSong(score.SongId);
+            ModeType mode = client.Mode;
+            DifficultyType difficulty = score.Difficulty;
+            int exr = 0;
+            switch (mode)
             {
-                _logger.Error("Could't save score for: {0}", client.Character.Name);
+                case ModeType.RubyMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.RubyEzDifficulty;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d8;
+                            break;
+                        case DifficultyType.HD:
+                            exr = song.d13;
+                            break;
+                        case DifficultyType.SHD:
+                            //if(song.Id == 1 && score.TotalNotes > 1700){ //LUCID
+                            //    exr = 19;
+                            //}
+                            //else if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
+                            //    exr = 19;
+                            //}
+                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
+                            //    exr = 18;
+                            //}
+                            //else{
+                                exr = song.RubyShdDifficulty;
+                            //}
+                            break;
+                    }
+                    break;
+                case ModeType.StreetMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.d23;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d28;
+                            break;
+                        case DifficultyType.HD:
+                            exr = song.d33;
+                            break;
+                        case DifficultyType.SHD:
+                            //if(song.Id == 1 && score.TotalNotes > 1700){ //LUCID
+                            //    exr = 19;
+                            //}
+                            //else if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
+                            //    exr = 19;
+                            //}
+                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
+                            //    exr = 20;
+                            //}
+                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
+                            //    exr = 19;
+                            //}
+                            //else{
+                                exr = song.d38;
+                            //}
+                            break;
+                    }
+                    break;
+                case ModeType.ClubMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.d43;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d48;
+                            break;
+                        case DifficultyType.HD:
+                            //if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
+                            //    exr = 18;
+                            //}
+                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
+                            //    exr = 20;
+                            //}
+                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
+                            //    exr = 19;
+                            //}
+                            //else{
+                                exr = song.ClubHdDifficulty;
+                            //}
+                            break;
+                        case DifficultyType.SHD:
+                            //if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
+                            //    exr = 19;
+                            //}
+                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
+                            //    exr = 20;
+                            //}
+                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
+                            //    exr = 20;
+                            //}
+                            //else{
+                                exr = song.d58;
+                            //}
+                            break;
+                    }
+                    break;
+            }
+
+            if (client.Score.StageClear)
+            {
+                System.Timers.ElapsedEventHandler eventHandler = (sender, e) =>
+                {
+                    if (lastHander != null)
+                    {
+                        client.Room.GameResultWaitTimer.Elapsed -= lastHander;
+                        lastHander = null;
+                    }
+                    OnFinished(client, clients, exr);
+                };
+
+                if (lastHander != null)
+                    client.Room.GameResultWaitTimer.Elapsed -= lastHander;
+                client.Room.GameResultWaitTimer.Elapsed += eventHandler;
+                lastHander = eventHandler;
+
+                client.Room.GameResultWaitTimer.Enabled = false;
+                client.Room.GameResultWaitTimer.Start();
             }
 
             if (!client.Room.Finished())
@@ -144,17 +307,50 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                 return;
             }
 
-            List<EzClient> clients = client.Room.GetClients();
-            IBuffer scorePacket = ScorePacket.Create(clients);
+            if (lastHander != null)
+            {
+                client.Room.GameResultWaitTimer.Elapsed -= lastHander;
+                lastHander = null;
+            }
+            client.Room.GameResultWaitTimer.Enabled = false;
+
+            
+            OnFinished(client, clients, exr);
+        }
+
+        void OnFinished(EzClient client, List<EzClient> clients, int exr){
+
+            for(int i = clients.Count - 1; i >= 0; i--)
+            {
+                if (clients[i].Score == null)
+                {
+                    clients.RemoveAt(i);
+                }
+            }
+
+            GameGroupType group = client.Room.Info.GameGroupType;
+            IBuffer scorePacket = ScorePacket.Create(clients, group, exr);
             Send(client.Room, 0x1B, scorePacket); //27
 
             Task.Delay(TimeSpan.FromSeconds(10)).ContinueWith(t =>
             {
+                
                 // Display Room after 10 seconds
+                foreach (var c in clients)
+                {   
+                    c.Player.Ready = false;
+                    c.Player.readyCon = 0;
+                }
+
                 IBuffer buffer = EzServer.Buffer.Provide();
                 buffer.WriteByte(0);
                 Send(client.Room, 0x1C, buffer); //28
+
+                client.Room.Info.Playing = false;
+                IBuffer announceRoomPacket = RoomPacket.CreateAnnounceRoomPacket(client.Channel);
+                Send(client.Channel.GetLobbyClients(), 13, announceRoomPacket);
             });
         }
+           
     }
 }

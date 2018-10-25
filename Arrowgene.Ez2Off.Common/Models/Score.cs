@@ -33,7 +33,7 @@ namespace Arrowgene.Ez2Off.Common.Models
         {
             if (score.MaxCombo == score.TotalNotes)
             {
-                if (score.Good == 0 && score.Miss == 0 && score.Fail == 0)
+                if (score.Good == 0 && score.Fail == 0)
                 {
                     if (score.Cool == 0)
                     {
@@ -75,12 +75,15 @@ namespace Arrowgene.Ez2Off.Common.Models
         public int TotalNotes { get; set; }
         public ComboType ComboType { get; set; }
         public int TotalScore => CalulateTotalScore();
+        public int BestScore { get; set; }
         public NoteEffectType NoteEffect { get; set; }
         public FadeEffectType FadeEffect { get; set; }
         public TeamType Team { get; set; }
         public int Slot { get; set; }
+        public ModeType ModeType { get; set; }
         public DateTime Created { get; set; }
         public string CharacterName { get; set; }
+        public int Ranking { get; set; }
 
         private int CalulateTotalScore()
         {

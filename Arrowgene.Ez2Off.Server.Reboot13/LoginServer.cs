@@ -111,6 +111,17 @@ namespace Arrowgene.Ez2Off.Server.Reboot13
                 meta.ReadSongData = true;
                 Database.UpsertMeta(meta);
             }
+            //else
+            //{
+            //    MusicDataBin musicDataBin = new MusicDataBin();
+            //    for (int i = 0; i < 207; i++)
+            //    {
+            //        Song song = Database.SelectSong(i);
+            //        _logger.Info("ID: {0}, Songs name: {1}", song.Id, song.e);
+            //        musicDataBin.Entries.Add(song);
+            //    }
+             //    musicDataBin.Write(Path.Combine(Utils.RelativeApplicationDirectory(), "Data/music_data_out.bin"));
+            //}
         }
     }
 }

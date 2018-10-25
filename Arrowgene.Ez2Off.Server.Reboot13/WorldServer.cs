@@ -46,9 +46,15 @@ namespace Arrowgene.Ez2Off.Server.Reboot13
 
         protected override void OnClientDisconnected(EzClient client)
         {
-            Database.UpsertCharacter(client.Character, client.Account.Id);
-            Database.UpsertSetting(client.Setting, client.Account.Id);
-
+            try{
+                Database.UpsertCharacter(client.Character, client.Account.Id);
+                Database.UpsertSetting(client.Setting, client.Account.Id);
+            }
+            catch(System.NullReferenceException exception){
+                _logger.Exception(exception);
+                return;
+            }
+            
             if (client.Room != null)
             {
                 Room room = client.Room;

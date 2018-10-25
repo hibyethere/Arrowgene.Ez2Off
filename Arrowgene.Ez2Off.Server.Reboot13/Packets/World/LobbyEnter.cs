@@ -64,6 +64,15 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             client.Session = result.Result;
 
             Channel channel = Server.GetChannel(client.Mode, client.Session.ChannelId);
+            
+            EzClient other = channel.GetClient(client.Character.Name);
+            if (other != null)
+            {
+                _logger.Info("Repeat login for account: {0}", other.Account.Name);
+                channel.Leave(other);
+                other.Socket.Close();
+            }
+
             channel.Join(client);
 
             IBuffer response = EzServer.Buffer.Provide();

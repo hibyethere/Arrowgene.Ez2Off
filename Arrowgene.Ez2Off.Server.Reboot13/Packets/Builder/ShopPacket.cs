@@ -37,14 +37,8 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteInt16((short) item.Id, Endianness.Big); //ItmeCode 1~5
             buffer.WriteByte(0);
             buffer.WriteByte(1);
-            buffer.WriteByte(0);
-            buffer.WriteByte(0);
-            buffer.WriteByte(0X27); //Coin // ??? buffer.WriteInt16((short)item.Coins); ???
-            buffer.WriteByte(0X10);
-            buffer.WriteByte(0);
-            buffer.WriteByte(0);
-            buffer.WriteByte(0X27); //Cash
-            buffer.WriteByte(0X10);
+            buffer.WriteInt32(9999999, Endianness.Big); //My Coin
+            buffer.WriteInt32(0, Endianness.Big); //My Coin
             return buffer;
         }
     }

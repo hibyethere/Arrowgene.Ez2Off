@@ -77,7 +77,7 @@ namespace Arrowgene.Ez2Off.Data.BinFiles
             buffer.WriteString(Header);
             buffer.Position = HeaderSize;
             buffer.WriteInt32(Entries.Count);
-            for (int i = 1; i < Entries.Count; i++)
+            for (int i = 0; i < Entries.Count; i++)
             {
                 T entry = Entries[i];
                 WriteEntry(entry, buffer);

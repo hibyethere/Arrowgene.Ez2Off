@@ -215,25 +215,40 @@ namespace Arrowgene.Ez2Off.Server
         void IConsumer.OnReceivedData(ITcpSocket socket, byte[] data)
         {
             EzClient client = Clients.GetClient(socket);
-            EzPacket packet = client.Read(data);
-            if (packet != null)
+            //拆粘包
+            IBuffer buffer = Buffer.Provide(data);
+
+            int pos = 0, size = 0;
+
+            while (pos < buffer.Size)
             {
-                if (_handlers.ContainsKey(packet.Id))
+                size = buffer.GetInt16(pos + 1, Endianness.Big);
+
+                //防止越界
+                EzPacket packet = client.Read(buffer.GetBytes(pos,
+                        Math.Min(buffer.Size - pos, EzPacket.HeaderSize + size)));
+
+                pos += Math.Min(buffer.Size - pos, EzPacket.HeaderSize + size);
+
+                if (packet != null)
                 {
-                    _logger.LogIncomingPacket(client, packet);
-                    packet.Data.SetPositionStart();
-                    try
+                    if (_handlers.ContainsKey(packet.Id))
                     {
-                        _handlers[packet.Id].Handle(client, packet);
+                        _logger.LogIncomingPacket(client, packet);
+                        packet.Data.SetPositionStart();
+                        try
+                        {
+                            _handlers[packet.Id].Handle(client, packet);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Exception(ex);
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.Exception(ex);
+                        _logger.LogUnknownIncommingPacket(client, packet);
                     }
-                }
-                else
-                {
-                    _logger.LogUnknownIncommingPacket(client, packet);
                 }
             }
         }

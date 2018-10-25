@@ -84,6 +84,29 @@ namespace Arrowgene.Ez2Off.Common.Models
             return inventoryItem.Item.Id;
         }
 
+        public int GetSpecialId()
+        {
+            InventoryItem inventoryItem = GetEquiped(ItemType.Special);
+            if (inventoryItem == null)
+            {
+                return 0;
+            }
+
+            return inventoryItem.Item.Id;
+        }
+
+        public int GetWideEffectId()
+        {
+            InventoryItem inventoryItem = GetEquiped(ItemType.Effect);
+            if (inventoryItem == null)
+            {
+                return 0;
+            }
+
+            return inventoryItem.Item.Id;
+        }
+
+
         public InventoryItem GetEquiped(ItemType itemType)
         {
             switch (itemType)
@@ -91,6 +114,8 @@ namespace Arrowgene.Ez2Off.Common.Models
                 case ItemType.Avatar: return GetEquip(0);
                 case ItemType.Skin: return GetEquip(1);
                 case ItemType.Note: return GetEquip(2);
+                case ItemType.Effect: return GetEquip(9);
+                case ItemType.Special: return GetEquip(5);
                 default: return null;
             }
         }

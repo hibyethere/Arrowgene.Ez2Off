@@ -28,6 +28,7 @@ using Arrowgene.Ez2Off.Common.Models;
 using Arrowgene.Ez2Off.Server.Models;
 using Arrowgene.Ez2Off.Server.Client;
 using Arrowgene.Services.Buffers;
+using System;
 
 namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
 {
@@ -52,6 +53,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteByte(room.Info.Number); //Room number
             buffer.WriteByte(0);
             buffer.WriteByte(room.Master == client ? (byte) 0 : (byte) 1); // 0=master 1=user
+            //buffer.WriteByte((byte)client.Player.Slot);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
@@ -111,7 +113,8 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0); //
-            buffer.WriteByte(room.Master == client ? (byte) 0 : (byte) 1); // 0=master 1=user
+            //buffer.WriteByte(room.Master == client ? (byte) 0 : (byte) 1); // 0=master 1=user
+            buffer.WriteByte((byte)client.Player.Slot);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
@@ -147,7 +150,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             IBuffer buffer = EzServer.Buffer.Provide();
 
 
-            buffer.WriteByte(2);
+            buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
@@ -162,7 +165,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
                 }
                 else
                 {
-                    buffer.WriteByte(0xFF);
+                    buffer.WriteByte(0x0F);
                     buffer.WriteByte(0);
                     buffer.WriteByte(0);
                     buffer.WriteByte(0);
@@ -184,8 +187,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             Character character = client.Character;
             Inventory inventory = client.Inventory;
 
-
-            buffer.WriteByte((byte) index);
+            buffer.WriteByte((byte) client.Player.Slot);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
@@ -199,7 +201,9 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteByte(0);
             buffer.WriteByte(0);
             buffer.WriteByte(0);
-
+            Console.WriteLine(character.Name);
+            Console.WriteLine(index);
+            Console.WriteLine(client.Player.Slot);
             buffer.WriteFixedString(character.Name, 16, Utils.KoreanEncoding);
             buffer.WriteByte(0); // String Termination
             buffer.WriteByte(0);
@@ -543,16 +547,16 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             foreach (Room room in rooms)
             {
                 buffer.WriteInt16(room.Info.Number, Endianness.Big); // 방 번호
-                buffer.WriteByte(0);
+                buffer.WriteByte((byte)(room.Info.Playing ? 2 : 0)); // Playing Room
                 buffer.WriteByte(room.Info.MaxPlayer); // 최대 인원수
                 buffer.WriteByte((byte) room.GetClients().Count); // 현재 참여한 인원수
                 buffer.WriteByte((byte) room.Info.GameType); // 0 = 싱글 1 = 멀티
                 buffer.WriteByte((byte) room.Info.GameGroupType); // team
                 buffer.WriteByte(room.Info.PasswordProtected ? (byte) 1 : (byte) 0);
-                buffer.WriteByte((byte) room.Info.Difficulty); // 0 = 이지 1 = 노멀 2 = 하드
+                buffer.WriteByte(System.Math.Min((byte)room.Info.Difficulty, (byte)2));// 0 = 이지 1 = 노멀 2 = 하드
                 buffer.WriteByte(0); // 0 = Easy Score // 1 = Easy KOOL
                 buffer.WriteByte(room.Info.RandomSong ? (byte) 1 : (byte) 0); // 1 = 랜덤 디스크
-                buffer.WriteByte(0); // Maybe selected song big endian int 16 ?
+                buffer.WriteByte(0); 
                 buffer.WriteByte((byte) room.Info.SelectedSong); // 디스크 번호
                 buffer.WriteByte(0);
                 buffer.WriteFixedString(room.Info.Name, 21, Utils.KoreanEncoding);

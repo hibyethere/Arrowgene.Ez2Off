@@ -44,8 +44,8 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
         {
             int songId = client.Room.Info.SelectedSong;
             DifficultyType difficulty = client.Room.Info.Difficulty;
-            Score myBestScore = Database.SelectBestScore(client.Account.Id, songId, difficulty);
-            List<Score> scores = Database.SelectBestScores(songId, difficulty, 5);
+            Score myBestScore = Database.SelectBestScore(client.Account.Id, songId, difficulty, client.Mode);
+            List<Score> scores = Database.SelectBestScores(songId, difficulty, client.Mode, 5);
             scores.Sort((x, y) => y.TotalScore.CompareTo(x.TotalScore));
 
             IBuffer buffer = EzServer.Buffer.Provide();

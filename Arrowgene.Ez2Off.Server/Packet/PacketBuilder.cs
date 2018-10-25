@@ -95,5 +95,9 @@ namespace Arrowgene.Ez2Off.Server.Packet
 
             return packet;
         }
+        public void Reset()
+        {
+            _isFinished = true;
+        }
     }
 }

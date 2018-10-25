@@ -44,7 +44,7 @@ namespace Arrowgene.Ez2Off.Common.Models
             ClubExr = 0;
             Exp = 0;
             Coin = 9999999;
-            Cash = 0;
+            Cash = 5000;
             MaxCombo = 0;
             RubyWins = 0;
             StreetWins = 0;

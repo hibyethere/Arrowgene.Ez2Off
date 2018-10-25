@@ -22,6 +22,8 @@
  * along with Arrowgene.Ez2Off. If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using Arrowgene.Ez2Off.Common;
 using Arrowgene.Ez2Off.Common.Models;
 using Arrowgene.Ez2Off.Server.Client;
 using Arrowgene.Ez2Off.Server.Packet;
@@ -43,6 +45,20 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             IBuffer buffer = EzServer.Buffer.Provide();
             buffer.WriteByte(0);
             Send(client, 0x18, buffer); //24
+
+            if(client.Game.Type == GameType.MultiPLayer){
+                if(client != null && client.Player.Slot == 0){
+                    Song song = Database.SelectSong(client.Room.Info.SelectedSong);
+                    IBuffer response2 = EzServer.Buffer.Provide();
+                    response2.WriteByte((byte) ChatType.Room);
+                    response2.WriteFixedString(client.Character.Name, 17, Utils.KoreanEncoding);
+                    response2.WriteByte(12);
+                    response2.WriteString("BPM: " + song.Bpm.ToString(), Utils.KoreanEncoding);
+                    Send(client.Room, 18, response2);
+                }
+            }
+
+                    
         }
     }
 }

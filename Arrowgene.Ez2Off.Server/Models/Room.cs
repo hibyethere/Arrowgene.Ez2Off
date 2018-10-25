@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using Arrowgene.Ez2Off.Common.Models;
 using Arrowgene.Ez2Off.Server.Client;
 using Arrowgene.Services.Logging;
+using System.Timers;
 
 namespace Arrowgene.Ez2Off.Server.Models
 {
@@ -35,21 +36,28 @@ namespace Arrowgene.Ez2Off.Server.Models
 
         private readonly EzClient[] _clients;
         private readonly object _lock;
+        private object _lock2;
         private readonly Channel _channel;
 
         public Room(byte id, RoomInfo info, EzClient master)
         {
             _lock = new object();
+            _lock2 = new object();
             _clients = new EzClient[MaxSlots];
             Info = info;
             Info.Number = id;
             Master = master;
             _channel = master.Channel;
+            GameResultWaitTimer = new Timer(10000);
+            GameResultWaitTimer.AutoReset = false;
             Join(master);
         }
 
         public RoomInfo Info { get; }
         public EzClient Master { get; private set; }
+
+        public Timer GameResultWaitTimer { get; }
+
 
         public void Join(EzClient client)
         {
@@ -85,23 +93,31 @@ namespace Arrowgene.Ez2Off.Server.Models
                 {
                     // Master left the room, find a new one.
                     Master = null;
-                    for (int i = 0; i < MaxSlots; i++)
-                    {
-                        if (_clients[i] != null)
-                        {
-                            Master = _clients[i];
-                            // TODO announce new master.
-                        }
-                    }
+                    //for (int i = 0; i < MaxSlots; i++)
+                    //{
+                    //    if (_clients[i] != null)
+                    //    {
+                    //        Master = _clients[i];
+                    //        // TODO announce new master.
+                    //    }
+                    //}
                 }
 
                 client.Room = null;
+                client.Player = new Player();
 
-                if (Master == null)
-                {
+                //if (Master == null)
+                //{
                     // No people inside the room, close the room.
-                    _channel.CloseRoom(this);
+                //    _channel.CloseRoom(this);
+                //}
+                for (int i = 0; i < MaxSlots; i++)
+                {
+                    if (_clients[i] != null)
+                        return;
                 }
+                // No people inside the room, close the room.
+                _channel.CloseRoom(this);
             }
         }
 
@@ -113,8 +129,8 @@ namespace Arrowgene.Ez2Off.Server.Models
             }
 
             EzClient client;
-            lock (_lock)
-            {
+            lock (_lock2)
+            {   
                 client = _clients[index];
             }
 

@@ -66,6 +66,7 @@ namespace Arrowgene.Ez2Off.Server.Client
         public Player Player { get; set; }
         public Score Score { get; set; }
         public Game Game { get; set; }
+        public EzWorldServer Server { get; set; }
 
         public EzPacket Read(byte[] data)
         {
@@ -76,6 +77,11 @@ namespace Arrowgene.Ez2Off.Server.Client
         {
             byte[] data = packet.ToData().GetAllBytes();
             Socket.Send(data);
+        }
+
+        public void ResetPacketBuilder()
+        {
+            _packetBuilder.Reset();
         }
     }
 }

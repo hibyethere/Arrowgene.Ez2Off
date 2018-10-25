@@ -101,7 +101,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteInt16((short) character.RubyExr); //Ruby Mix Exr
             buffer.WriteInt16((short) character.StreetExr); //Street Mix Exr
             buffer.WriteInt16((short) character.ClubExr); //Club Mix Exr
-            buffer.WriteInt16((short) character.GetExr(client.Mode)); //My Exr
+            buffer.WriteInt16(0); //My Exr
             
             buffer.WriteInt32(character.Exp);
             buffer.WriteInt32(Character.ExpForNextLevel(character));

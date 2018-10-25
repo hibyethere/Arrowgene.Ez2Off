@@ -46,10 +46,10 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             buffer.WriteByte(0);
 
 
-            for (int i = 0; i < 219; i++)
+            for (int i = 0; i < 249; i++) //Disc Num
             {
-                buffer.WriteInt16(99); //Disc Num 1
-                buffer.WriteInt32(0); //AII DJPoint
+                buffer.WriteInt16(99); //DJ Point
+                buffer.WriteInt32(0);
 
                 buffer.WriteByte(0);
                 buffer.WriteByte(0);
