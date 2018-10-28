@@ -109,7 +109,8 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                             Send(client.Channel.GetLobbyClients(), 18, r_response);
                             
                         }
-                        else if(client.Character.Name == "루뽀"){
+                        //else if(client.Character.Name == "루뽀"){
+                        else if(client.Account.State == AccountState.GameMaster){ // DB에서 Account 테이블 State 컬럼 100으로 수정
                             if(r_command[0].Equals("~delete")){
                                 string name = r_command[1];
                                 Console.WriteLine(name);
