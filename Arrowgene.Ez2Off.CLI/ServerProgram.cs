@@ -131,7 +131,7 @@ namespace Arrowgene.Ez2Off.CLI
 
         public object ConfigFileName { get; set; }
 
-        private void Start()
+        private async void Start()
         {
             _logger.Debug("Environment:");
             _logger.Debug("CurrentDirectory: {0}", Environment.CurrentDirectory);
