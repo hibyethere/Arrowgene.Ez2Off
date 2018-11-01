@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is part of Arrowgene.Ez2Off
  *
  * Arrowgene.Ez2Off is a server implementation for the game "Ez2On".
@@ -155,6 +155,80 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             player4.WriteByte(0); //?
             Send(client, 0x19, player4);
             */
+
+            List<EzClient> clients = client.Room.GetClients();
+            Song song = Database.SelectSong(score.SongId);
+            ModeType mode = client.Mode;
+            DifficultyType difficulty = score.Difficulty;
+            int exr = 0;
+            int totalNotes = 0;
+            switch (mode)
+            {
+                case ModeType.RubyMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.RubyEzDifficulty;
+                            totalNotes = song.RubyEzNotes;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d8;
+                            totalNotes = song.d10;
+                            break;
+                        case DifficultyType.HD:
+                            exr = song.d13;
+                            totalNotes = song.d15;
+                            break;
+                        case DifficultyType.SHD:
+                            exr = song.RubyShdDifficulty;
+                            totalNotes = song.RubyShdNotes;
+                            break;
+                    }
+                    break;
+                case ModeType.StreetMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.d23;
+                            totalNotes = song.d25;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d28;
+                            totalNotes = song.d30;
+                            break;
+                        case DifficultyType.HD:
+                            exr = song.d33;
+                            totalNotes = song.d35;
+                            break;
+                        case DifficultyType.SHD:
+                            exr = song.d38;
+                            totalNotes = song.d40;
+                            break;
+                    }
+                    break;
+                case ModeType.ClubMix:
+                    switch (difficulty)
+                    {
+                        case DifficultyType.EZ:
+                            exr = song.d43;
+                            totalNotes = song.d45;
+                            break;
+                        case DifficultyType.NM:
+                            exr = song.d48;
+                            totalNotes = song.d50;
+                            break;
+                        case DifficultyType.HD:
+                            exr = song.ClubHdDifficulty;
+                            totalNotes = song.ClubHdNotes;
+                            break;
+                        case DifficultyType.SHD:
+                            exr = song.d58;
+                            totalNotes = song.ClubShdNotes;
+                            break;
+                    }
+                    break;
+            }
+
             double allKoolScore = 0;
             if ((score.BestScore == 0) || (score.TotalScore > score.BestScore)){
                 // Modify: 오차 발생 가능하므로 여유있게 +10 정도. 어차피 올케쿨 보너스는 +50000
@@ -165,118 +239,21 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                 _logger.Debug("allKoolScore: {0}", allKoolScore);
 
                 if(score.RawScore <= allKoolScore){
-                    if (!Database.InsertScore(score))
-                    {
-                        _logger.Error("Could't save score for: {0}", client.Character.Name);
+                    if(score.SongId <= 205){
+                        if(score.TotalNotes == totalNotes){
+                            if (!Database.InsertScore(score))
+                            {
+                                _logger.Error("Could't save score for: {0}", client.Character.Name);
+                            }
+                        }
                     }
+                    else{
+                        if (!Database.InsertScore(score))
+                        {
+                            _logger.Error("Could't save score for: {0}", client.Character.Name);
+                        }
+                    } 
                 }
-            }
-
-            List<EzClient> clients = client.Room.GetClients();
-            Song song = Database.SelectSong(score.SongId);
-            ModeType mode = client.Mode;
-            DifficultyType difficulty = score.Difficulty;
-            int exr = 0;
-            switch (mode)
-            {
-                case ModeType.RubyMix:
-                    switch (difficulty)
-                    {
-                        case DifficultyType.EZ:
-                            exr = song.RubyEzDifficulty;
-                            break;
-                        case DifficultyType.NM:
-                            exr = song.d8;
-                            break;
-                        case DifficultyType.HD:
-                            exr = song.d13;
-                            break;
-                        case DifficultyType.SHD:
-                            //if(song.Id == 1 && score.TotalNotes > 1700){ //LUCID
-                            //    exr = 19;
-                            //}
-                            //else if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
-                            //    exr = 19;
-                            //}
-                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
-                            //    exr = 18;
-                            //}
-                            //else{
-                                exr = song.RubyShdDifficulty;
-                            //}
-                            break;
-                    }
-                    break;
-                case ModeType.StreetMix:
-                    switch (difficulty)
-                    {
-                        case DifficultyType.EZ:
-                            exr = song.d23;
-                            break;
-                        case DifficultyType.NM:
-                            exr = song.d28;
-                            break;
-                        case DifficultyType.HD:
-                            exr = song.d33;
-                            break;
-                        case DifficultyType.SHD:
-                            //if(song.Id == 1 && score.TotalNotes > 1700){ //LUCID
-                            //    exr = 19;
-                            //}
-                            //else if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
-                            //    exr = 19;
-                            //}
-                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
-                            //    exr = 20;
-                            //}
-                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
-                            //    exr = 19;
-                            //}
-                            //else{
-                                exr = song.d38;
-                            //}
-                            break;
-                    }
-                    break;
-                case ModeType.ClubMix:
-                    switch (difficulty)
-                    {
-                        case DifficultyType.EZ:
-                            exr = song.d43;
-                            break;
-                        case DifficultyType.NM:
-                            exr = song.d48;
-                            break;
-                        case DifficultyType.HD:
-                            //if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
-                            //    exr = 18;
-                            //}
-                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
-                            //    exr = 20;
-                            //}
-                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
-                            //    exr = 19;
-                            //}
-                            //else{
-                                exr = song.ClubHdDifficulty;
-                            //}
-                            break;
-                        case DifficultyType.SHD:
-                            //if(song.Id == 69 && score.TotalNotes > 1700){ //NIHILISM
-                            //    exr = 19;
-                            //}
-                            //else if(song.Id == 31 && score.TotalNotes > 1700){ //KAMUI
-                            //    exr = 20;
-                            //}
-                            //else if(song.Id == 79 && score.TotalNotes > 1700){ //INFINITY
-                            //    exr = 20;
-                            //}
-                            //else{
-                                exr = song.d58;
-                            //}
-                            break;
-                    }
-                    break;
             }
 
             if (client.Score.StageClear)
