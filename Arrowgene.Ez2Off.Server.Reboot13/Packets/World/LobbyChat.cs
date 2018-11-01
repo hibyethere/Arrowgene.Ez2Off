@@ -138,6 +138,20 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                                 Send(client.Channel.GetLobbyClients(), 18, r_response);
 
                             }
+                            else if(r_command[0].Equals("~songd")){
+                                int songId = Int32.Parse(r_command[1]);
+                                int difficulty = Int32.Parse(r_command[2]);
+
+                                Database.DeleteScore(songId, difficulty, (int) client.Mode);
+
+                                IBuffer r_response = EzServer.Buffer.Provide();
+                                r_response.WriteByte((byte) chatType);
+                                r_response.WriteFixedString(client.Character.Name, 17, Utils.KoreanEncoding);
+                                r_response.WriteByte(10);
+                                r_response.WriteString("Success", Utils.KoreanEncoding);
+                                Send(client.Channel.GetLobbyClients(), 18, r_response);
+
+                            }
                             else{
                                 Send(client.Channel.GetLobbyClients(), 18, response);
                             }

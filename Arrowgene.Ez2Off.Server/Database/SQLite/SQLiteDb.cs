@@ -1096,6 +1096,17 @@ namespace Arrowgene.Ez2Off.Server.Database.SQLite
             return true;
         }
 
+        public bool DeleteScore(int songId, int difficulty, int mode){
+            string sql = String.Join(Seperator,
+                "DELETE FROM `score`",
+                "WHERE",
+                $"`song_id`={songId} AND `difficulty`={difficulty} AND `mode_type`={mode}"
+            );
+            sql += ";";
+            ExecuteNonQuery(sql);
+            return true;
+        }
+
         public bool DeleteScore(int songId, int difficulty, int mode, int score){
             string sql = String.Join(Seperator,
                 "DELETE FROM `score`",
