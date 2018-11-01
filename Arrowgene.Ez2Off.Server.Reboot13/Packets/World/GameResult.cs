@@ -239,7 +239,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
                 _logger.Debug("allKoolScore: {0}", allKoolScore);
 
                 if(score.RawScore <= allKoolScore){
-                    if(score.SongId <= 205){
+                    if(score.SongId <= 219){
                         if(score.TotalNotes == totalNotes){
                             if (!Database.InsertScore(score))
                             {
