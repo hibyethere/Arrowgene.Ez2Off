@@ -35,7 +35,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
         {
             short count = (short) clients.Count;
 
-            int[] indexes = new int[count], scores = new int[count], places = new int[count];
+            int[] indexes = new int[count], scores = new int[count];
             for(int i = 0; i < count; i++)
             {
                 indexes[i] = i;
@@ -44,7 +44,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
             System.Array.Sort(scores, indexes);
             System.Array.Reverse(scores);
             System.Array.Reverse(indexes);
-            int place = 0, redScore = 0, blueScore = 0;
+            int redScore = 0, blueScore = 0;
             for (int i = 0; i < count; i++)
             {
                 switch (clients[indexes[i]].Player.Team)
@@ -56,53 +56,15 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
                         blueScore += clients[indexes[i]].Score.TotalScore;
                         break;
                 }
-                places[0] = place;
-                if (i == 0)
-                {
-                    places[0] = place;
-                }
-                else if (i > 0 && scores[i] < scores[i - 1])
-                {
-                    places[i] = ++place;
-                }
             }
-             if (group == GameGroupType.Team)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    switch (clients[indexes[i]].Player.Team)
-                    {
-                        case TeamType.Red:
-                            if (redScore >= blueScore)
-                            {
-                                places[i] = 0;
-                            }
-                            else if (redScore < blueScore)
-                            {
-                                places[i] = 1;
-                            }
-                            break;
-                        case TeamType.Blue:
-                            if (blueScore >= redScore)
-                            {
-                                places[i] = 0;
-                            }
-                            else if (blueScore < redScore)
-                            {
-                                places[i] = 1;
-                            }
-                            break;
-                    }
-                }
-            }
-
+            
             IBuffer buffer = EzServer.Buffer.Provide();
             buffer.WriteInt16((short) clients.Count, Endianness.Big);
             for (short i = 0; i < count; i++)
             {
                 EzClient client = clients[indexes[i]];
                 Score score = client.Score;
-                
+
                 /*/
                 buffer.WriteInt16(i, Endianness.Big);
                 buffer.WriteByte(score.StageClear ? (byte) 0 : (byte) 1);
@@ -131,9 +93,40 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.Builder
                 buffer.WriteInt16(0, Endianness.Big); // + Coin Increase [MAX:9999]
                 buffer.WriteByte(0); // 1 = Level Up [HP Points +1 / DJ Points +1] increase
                 buffer.WriteInt16((short) score.TotalNotes, Endianness.Big);
-                buffer.WriteByte((byte)places[i]); //尝试解决排名问题
-                //buffer.WriteByte(0);
-                buffer.WriteByte((byte) (places[i] > 0 ? 1 : 0));
+                
+                byte result_rank = 0;     
+
+                if(group != GameGroupType.Team){
+                    for(byte a = 0; a < count; a++){
+                        if(scores[a] == score.TotalScore){
+                            result_rank = a;
+                            break;
+                        }
+                    }
+                }
+                else{
+                    switch (client.Player.Team){
+                        case TeamType.Red:
+                            if (redScore >= blueScore){
+                                result_rank = 0;
+                            }
+                            else if (redScore < blueScore){
+                                result_rank = 1;
+                            }
+                            break;
+                        case TeamType.Blue:
+                            if (blueScore >= redScore){
+                                result_rank = 0;
+                            }
+                            else if (blueScore < redScore){
+                                result_rank = 1;
+                            }
+                            break;
+                    }
+                }
+
+                buffer.WriteByte(result_rank);
+                buffer.WriteByte((byte) (result_rank > 0 ? 1 : 0)); // 1 = Lose, 0 = Win
                 buffer.WriteInt16(0); //EXP +%
                 buffer.WriteInt16(0); //Coin +%
                 buffer.WriteByte(client.Character.Level);

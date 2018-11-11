@@ -53,6 +53,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
         }
         */
 
+        /*
         public float checkKey(int keyId, int wideId, Game game){
             if(game.Type == GameType.SinglePlayer){ // 싱글 플레이
                 if(keyId != 0 && wideId != 0){  // 해금열쇠 착용 O, 와이드 착용 O
@@ -73,6 +74,7 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             }
             
         }
+        */
         
 
         public override void Handle(EzClient client, EzPacket packet)
@@ -95,19 +97,15 @@ namespace Arrowgene.Ez2Off.Server.Reboot13.Packets.World
             }
 
             //float MeasureScale = checkAvatar(client.Inventory.GetAvatarId());
-            float MeasureScale = checkKey(client.Inventory.GetSpecialId(), client.Inventory.GetWideEffectId(), client.Game);
-            
-            /*
+            //float MeasureScale = checkKey(client.Inventory.GetSpecialId(), client.Inventory.GetWideEffectId(), client.Game);
+
             float MeasureScale;
             Song song = Database.SelectSong(client.Room.Info.SelectedSong);
+            
+            MeasureScale = 1350 / (song.Bpm * 4.5f); // 150BPM / 4.5배속 / 2.0f 기준 스크롤 속도 = 1350
+            // ScrollSpeed = BPM * Speed * MeasureScale
+            // -> MeasureScale = ScrollSpeed / (BPM * Speed)
 
-            if(song.Bpm <= 120){
-                MeasureScale = 2.2f;
-            }
-            else{
-                MeasureScale = 1.8f;
-            }
-            */
 
             if(client.Room.Info.SelectedSong == 210){ // Sudden Death
                 IBuffer buffer = EzServer.Buffer.Provide();
